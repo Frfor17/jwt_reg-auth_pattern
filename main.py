@@ -4,6 +4,7 @@ from sqlalchemy.future import select
 from fastapi import FastAPI, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any, AsyncGenerator, List
+from passlib.context import CryptContext 
 
 # Импорты из локальных файлов
 from schemas import UserCreate, UserOut
@@ -22,10 +23,16 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with SessionLocal() as session:
         yield session
 
+pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
 # создание юзера
 @app.post("/users/", response_model=UserCreate)
 async def create_user(name: str, password: str, db: AsyncSession = Depends(get_db)) -> Any:
-    new_user = User(name=name, password=password)
+    hashed_password = get_password_hash(password)
+    new_user = User(name=name, password=hashed_password)
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
