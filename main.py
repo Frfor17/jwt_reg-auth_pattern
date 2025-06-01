@@ -40,7 +40,7 @@ def get_password_hash(password):
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
-def create_access_token(data: dict, expires: timedelta | None = None):
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
     to_encode.update({"exp":expire})
@@ -69,7 +69,7 @@ async def get_all_users(db: AsyncSession = Depends(get_db)):
 # вход, логин юзера
 @app.post("/token")
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
-    user = await get_user_by_name(db, form_data_data.username)
+    user = await get_user_by_name(db, form_data.username)
     if not user or not verify_password(form_data.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
